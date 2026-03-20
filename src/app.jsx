@@ -321,15 +321,15 @@ export default function PowerZones() {
     setLoaded(true);
   },[]);
 
+  const zones = useMemo(()=>buildZones(ftp,maxHR),[ftp,maxHR]);
+  const week  = WEEKS[weekIdx];
+
   // Don't render until storage has been checked — avoids flicker from default→saved values
   if (!loaded) return (
     <div style={{background:"#0a0a0f",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{color:"#475569",fontSize:13,fontFamily:"'Trebuchet MS',sans-serif"}}>Loading your plan...</div>
     </div>
   );
-
-  const zones = useMemo(()=>buildZones(ftp,maxHR),[ftp,maxHR]);
-  const week  = WEEKS[weekIdx];
   const pc    = PHASE_COLORS[week.phase]||"#60a5fa";
 
   return (
