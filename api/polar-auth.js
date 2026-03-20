@@ -1,4 +1,4 @@
-// netlify/functions/polar-auth.js
+// api/polar-auth.js
 // Handles the Polar OAuth2 callback and token exchange
 //
 // Flow:
@@ -7,22 +7,16 @@
 //   3. This function exchanges the code for an access token
 //   4. Token is returned to the frontend via redirect with hash params
 
-export const handler = async (event) => {
-  const { code, error } = event.queryStringParameters || {}
+export default async function handler(req, res) {
+  const { code, error } = req.query
 
   // Handle OAuth errors from Polar
   if (error) {
-    return {
-      statusCode: 302,
-      headers: { Location: `/?polar_error=${encodeURIComponent(error)}` },
-    }
+    return res.redirect(`/?polar_error=${encodeURIComponent(error)}`)
   }
 
   if (!code) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Missing authorisation code' }),
-    }
+    return res.status(400).json({ error: 'Missing authorisation code' })
   }
 
   const clientId     = process.env.POLAR_CLIENT_ID
@@ -30,10 +24,7 @@ export const handler = async (event) => {
   const redirectUri  = process.env.POLAR_REDIRECT_URI
 
   if (!clientId || !clientSecret) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Polar API credentials not configured' }),
-    }
+    return res.status(500).json({ error: 'Polar API credentials not configured' })
   }
 
   try {
@@ -57,10 +48,7 @@ export const handler = async (event) => {
     if (!response.ok) {
       const err = await response.text()
       console.error('Polar token exchange failed:', err)
-      return {
-        statusCode: 302,
-        headers: { Location: `/?polar_error=token_exchange_failed` },
-      }
+      return res.redirect(`/?polar_error=token_exchange_failed`)
     }
 
     const tokenData = await response.json()
@@ -74,17 +62,11 @@ export const handler = async (event) => {
       user_id:      tokenData.x_user_id,
     })
 
-    return {
-      statusCode: 302,
-      headers: { Location: `/#polar_auth=${params.toString()}` },
-    }
+    return res.redirect(`/#polar_auth=${params.toString()}`)
 
   } catch (err) {
     console.error('Polar auth error:', err)
-    return {
-      statusCode: 302,
-      headers: { Location: `/?polar_error=server_error` },
-    }
+    return res.redirect(`/?polar_error=server_error`)
   }
 }
 

@@ -1,32 +1,24 @@
-// netlify/functions/polar-push.js
+// api/polar-push.js
 // Pushes a structured workout to Polar Flow calendar
 //
 // Converts a plan session (with segments and target watts) into
 // a Polar Training Plan phase workout that appears on the device
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method not allowed')
   }
 
-  const authHeader = event.headers.authorization
+  const authHeader = req.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Missing access token' }) }
+    return res.status(401).json({ error: 'Missing access token' })
   }
 
   const accessToken = authHeader.slice(7)
-
-  let body
-  try {
-    body = JSON.parse(event.body)
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) }
-  }
-
-  const { workout, date, ftp } = body
+  const { workout, date, ftp } = req.body
 
   if (!workout || !date || !ftp) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Missing workout, date or ftp' }) }
+    return res.status(400).json({ error: 'Missing workout, date or ftp' })
   }
 
   try {
@@ -52,19 +44,11 @@ export const handler = async (event) => {
     }
 
     const result = await response.json()
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, polarId: result.id }),
-    }
+    return res.status(200).json({ success: true, polarId: result.id })
 
   } catch (err) {
     console.error('Polar push error:', err)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    }
+    return res.status(500).json({ error: err.message })
   }
 }
 

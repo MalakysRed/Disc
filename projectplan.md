@@ -1,6 +1,6 @@
 # Project Plan — London → Brighton Training App
 
-**Target event:** BHF London to Brighton Off Road Bike Ride — 21 June 2026
+**Target event:** BHF London to Brighton Bike Ride — 21 June 2026
 **Stack:** React (Vite) + Netlify + Polar Accesslink API v3
 
 ---
@@ -9,7 +9,7 @@
 
 ### Phase 1 — Standalone Plan App ✅
 - [x] FTP-derived power zone calculator
-- [x] 15-week polarised training plan
+- [x] 15-week polarised road cycling training plan
 - [x] Workout detail with zone timeline charts and segment tables
 - [x] Weekly 80/20 aerobic balance tracker
 - [x] localStorage persistence
@@ -36,7 +36,7 @@
 | Polar OAuth | Not started | Needs Client ID/Secret from developer.polar.com |
 | Polar read | Not started | Phase 2 |
 | Polar write | Not started | Phase 3 |
-| Netlify deploy | Ready | `netlify.toml` configured |
+| Vercel deploy | Ready | `vercel.json` configured |
 
 ---
 
@@ -51,9 +51,9 @@
 | `src/polar/auth.js` | OAuth2 flow |
 | `src/polar/workouts.js` | Push workouts to Polar Flow |
 | `src/polar/activities.js` | Pull completed activities |
-| `netlify/functions/polar-auth.js` | OAuth callback handler |
-| `netlify/functions/polar-push.js` | Push workout to Polar |
-| `netlify/functions/polar-pull.js` | Pull activity from Polar |
+| `api/polar-auth.js` | OAuth callback handler |
+| `api/polar-push.js` | Push workout to Polar |
+| `api/polar-pull.js` | Pull activity from Polar |
 
 ---
 
@@ -62,7 +62,7 @@
 ```
 POLAR_CLIENT_ID=
 POLAR_CLIENT_SECRET=
-POLAR_REDIRECT_URI=https://YOUR-SITE.netlify.app/.netlify/functions/polar-auth
+POLAR_REDIRECT_URI=https://YOUR-SITE.vercel.app/api/polar-auth
 ```
 
 ---

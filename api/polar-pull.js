@@ -1,17 +1,17 @@
-// netlify/functions/polar-pull.js
+// api/polar-pull.js
 // Fetches completed activities from Polar Accesslink API
 //
 // Called by the frontend after a ride to pull actual data
 // and compare against the planned session
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method not allowed')
   }
 
-  const authHeader = event.headers.authorization
+  const authHeader = req.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Missing access token' }) }
+    return res.status(401).json({ error: 'Missing access token' })
   }
 
   const accessToken = authHeader.slice(7)
@@ -31,10 +31,7 @@ export const handler = async (event) => {
 
     if (txResponse.status === 204) {
       // No new data available
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ activities: [], message: 'No new activities since last check' }),
-      }
+      return res.status(200).json({ activities: [], message: 'No new activities since last check' })
     }
 
     if (!txResponse.ok) {
@@ -42,7 +39,6 @@ export const handler = async (event) => {
     }
 
     const transaction = await txResponse.json()
-    const txId = transaction['transaction-id']
     const txResourceUrl = transaction['resource-uri']
 
     // Step 2: List activities in this transaction
@@ -63,13 +59,13 @@ export const handler = async (event) => {
     // Step 3: Fetch each activity's detail
     const activities = await Promise.all(
       activityUrls.map(async (url) => {
-        const res = await fetch(url, {
+        const r = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Accept': 'application/json',
           },
         })
-        return res.ok ? res.json() : null
+        return r.ok ? r.json() : null
       })
     )
 
@@ -83,33 +79,26 @@ export const handler = async (event) => {
     const cleaned = activities
       .filter(Boolean)
       .map(a => ({
-        id:            a.id,
-        date:          a['start-time']?.split('T')[0],
-        startTime:     a['start-time'],
-        duration:      a.duration,
-        sport:         a.sport,
-        distance:      a.distance,
-        calories:      a.calories,
-        avgHR:         a['heart-rate']?.average,
-        maxHR:         a['heart-rate']?.maximum,
-        avgPower:      a['power']?.average,
-        maxPower:      a['power']?.maximum,
-        avgCadence:    a['cadence']?.average,
-        ascent:        a['ascent'],
-        trainingLoad:  a['training-load'],
+        id:           a.id,
+        date:         a['start-time']?.split('T')[0],
+        startTime:    a['start-time'],
+        duration:     a.duration,
+        sport:        a.sport,
+        distance:     a.distance,
+        calories:     a.calories,
+        avgHR:        a['heart-rate']?.average,
+        maxHR:        a['heart-rate']?.maximum,
+        avgPower:     a['power']?.average,
+        maxPower:     a['power']?.maximum,
+        avgCadence:   a['cadence']?.average,
+        ascent:       a['ascent'],
+        trainingLoad: a['training-load'],
       }))
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ activities: cleaned }),
-    }
+    return res.status(200).json({ activities: cleaned })
 
   } catch (err) {
     console.error('Polar pull error:', err)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    }
+    return res.status(500).json({ error: err.message })
   }
 }

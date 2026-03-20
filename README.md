@@ -4,7 +4,7 @@ A personal cycling training plan app with Polar API integration.
 
 ## Features
 
-- 15-week 80/20 polarised training plan for the BHF London to Brighton Off Road Bike Ride (21 June 2026)
+- 15-week 80/20 polarised training plan for the BHF London to Brighton Bike Ride (21 June 2026)
 - Dynamic FTP/HR zone calculator — update your FTP and all workouts recalculate instantly
 - Zone timeline charts and segment tables for every session
 - Weekly 80/20 aerobic balance tracker
@@ -40,13 +40,12 @@ l2b-plan/
 │       └── activities.js # Pull completed activities
 ├── public/
 │   └── index.html
-├── netlify/
-│   └── functions/
-│       ├── polar-auth.js      # OAuth callback handler
-│       ├── polar-push.js      # Push workout to Polar
-│       └── polar-pull.js      # Pull activity from Polar
+├── api/
+│   ├── polar-auth.js      # OAuth callback handler
+│   ├── polar-push.js      # Push workout to Polar
+│   └── polar-pull.js      # Pull activity from Polar
 ├── .env.example
-├── netlify.toml
+├── vercel.json
 ├── package.json
 └── README.md
 ```
@@ -58,8 +57,8 @@ l2b-plan/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/l2b-plan.git
-cd l2b-plan
+git clone https://github.com/MalakysRed/Disc.git
+cd Disc
 npm install
 npm run dev
 ```
@@ -68,7 +67,7 @@ npm run dev
 
 1. Go to [developer.polar.com](https://developer.polar.com)
 2. Create an account and register a new application
-3. Set the OAuth callback URL to: `https://YOUR-SITE.netlify.app/.netlify/functions/polar-auth`
+3. Set the OAuth callback URL to: `https://YOUR-SITE.vercel.app/api/polar-auth`
 4. Copy your Client ID and Client Secret
 
 ### 3. Environment variables
@@ -78,18 +77,12 @@ Copy `.env.example` to `.env` and fill in:
 ```
 POLAR_CLIENT_ID=your_client_id_here
 POLAR_CLIENT_SECRET=your_client_secret_here
-POLAR_REDIRECT_URI=https://YOUR-SITE.netlify.app/.netlify/functions/polar-auth
+POLAR_REDIRECT_URI=https://YOUR-SITE.vercel.app/api/polar-auth
 ```
 
-### 4. Deploy to Netlify
+### 4. Deploy to Vercel
 
-```bash
-npm install -g netlify-cli
-netlify init
-netlify deploy --prod
-```
-
-Set the same environment variables in Netlify dashboard under Site → Environment variables.
+Import the GitHub repo at [vercel.com/new](https://vercel.com/new) and set the environment variables under Project → Settings → Environment Variables.
 
 ---
 
@@ -126,6 +119,6 @@ This app uses the [Polar Accesslink API v3](https://www.polar.com/accesslink-api
 ## Tech Stack
 
 - **React** (Vite)
-- **Netlify** — hosting + serverless functions for Polar OAuth
+- **Vercel** — hosting + serverless functions for Polar OAuth
 - **Polar Accesslink API v3**
 - No other dependencies — intentionally lightweight
