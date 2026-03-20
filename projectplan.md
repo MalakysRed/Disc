@@ -1,7 +1,7 @@
 # Project Plan — London → Brighton Training App
 
 **Target event:** BHF London to Brighton Bike Ride — 21 June 2026
-**Stack:** React (Vite) + Netlify + Polar Accesslink API v3
+**Stack:** React (Vite) + Vercel + Polar Accesslink API v3
 
 ---
 
@@ -13,9 +13,11 @@
 - [x] Workout detail with zone timeline charts and segment tables
 - [x] Weekly 80/20 aerobic balance tracker
 - [x] localStorage persistence
+- [x] Deployed to Vercel at https://disc-cycle.vercel.app
 
 ### Phase 2 — Polar Read Integration
-- [ ] OAuth2 login flow (Netlify function: `polar-auth`)
+- [ ] OAuth2 login UI (connect/disconnect button in app)
+- [ ] OAuth2 callback handler (`api/polar-auth.js` — scaffolded, not wired to UI)
 - [ ] Pull completed activities from Polar Accesslink API
 - [ ] Auto-match completed rides to plan sessions
 - [ ] Show actual vs planned comparison per session
@@ -33,10 +35,11 @@
 | Area | Status | Notes |
 |------|--------|-------|
 | Training plan UI | Done | All 15 weeks, FTP calculator, charts |
-| Polar OAuth | Not started | Needs Client ID/Secret from developer.polar.com |
+| Vercel deploy | Live | https://disc-cycle.vercel.app |
+| Polar credentials | Configured | Client ID/Secret set in Vercel env vars |
+| Polar OAuth UI | Not started | `usePolar.js` hook ready, no UI wired yet |
 | Polar read | Not started | Phase 2 |
 | Polar write | Not started | Phase 3 |
-| Vercel deploy | Ready | `vercel.json` configured |
 
 ---
 
@@ -48,27 +51,30 @@
 | `src/data/workouts.js` | All workout definitions |
 | `src/data/weeks.js` | 15-week plan structure |
 | `src/utils/zones.js` | Zone calculation logic |
-| `src/polar/auth.js` | OAuth2 flow |
-| `src/polar/workouts.js` | Push workouts to Polar Flow |
-| `src/polar/activities.js` | Pull completed activities |
-| `api/polar-auth.js` | OAuth callback handler |
-| `api/polar-push.js` | Push workout to Polar |
-| `api/polar-pull.js` | Pull activity from Polar |
+| `src/utils/storage.js` | localStorage helpers |
+| `src/polar/usePolar.js` | Polar OAuth hook (login, logout, push, pull) |
+| `api/polar-auth.js` | OAuth callback handler (Vercel serverless) |
+| `api/polar-push.js` | Push workout to Polar (Vercel serverless) |
+| `api/polar-pull.js` | Pull activity from Polar (Vercel serverless) |
 
 ---
 
-## Environment Variables Required
+## Environment Variables
+
+Set in Vercel dashboard and local `.env`:
 
 ```
-POLAR_CLIENT_ID=
-POLAR_CLIENT_SECRET=
-POLAR_REDIRECT_URI=https://YOUR-SITE.vercel.app/api/polar-auth
+POLAR_CLIENT_ID=d7d30865-14f5-4460-af5a-03ee76d54bb9
+POLAR_CLIENT_SECRET=84b1d0f0-9358-417e-adb4-33c1fc335dd8
+POLAR_REDIRECT_URI=https://disc-cycle.vercel.app/api/polar-auth
+VITE_POLAR_CLIENT_ID=d7d30865-14f5-4460-af5a-03ee76d54bb9
+VITE_POLAR_REDIRECT_URI=https://disc-cycle.vercel.app/api/polar-auth
 ```
 
 ---
 
 ## Next Actions
 
-1. Register app at developer.polar.com and obtain Client ID / Secret
-2. Deploy to Netlify and set environment variables
-3. Implement Phase 2 OAuth flow and activity pull
+1. Build Phase 2 OAuth UI — connect/disconnect button, show Polar connection status
+2. Wire `usePolar.js` hook into `app.jsx`
+3. Implement activity pull and session matching
