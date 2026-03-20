@@ -18,7 +18,7 @@ A personal cycling training plan app with Polar API integration.
 ## Project Structure
 
 ```
-l2b-plan/
+disc-cycle/
 ├── src/
 │   ├── app.jsx          # Main React app
 │   ├── data/

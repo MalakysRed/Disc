@@ -8,7 +8,7 @@ import { usePolar } from './polar/usePolar.js'
 
 // ─── INLINE HELPERS (kept here for chart rendering) ──────────────────────────
 const seg = (z, m, lbl) => ({ z, m, lbl })
-const STORAGE_KEY = 'l2b-plan-settings'
+const STORAGE_KEY = 'disc-cycle-settings'
 
 // ─── DAY HELPER ──────────────────────────────────────────────────────────────
 function getDayWorkouts(weekIdx, dayIdx) {
