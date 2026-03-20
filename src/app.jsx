@@ -10,6 +10,14 @@ import { usePolar } from './polar/usePolar.js'
 const seg = (z, m, lbl) => ({ z, m, lbl })
 const STORAGE_KEY = 'disc-cycle-settings'
 
+// Plan starts Mon 9 Mar 2026 (Week 1)
+const PLAN_START = new Date('2026-03-09')
+function getSessionDate(weekIdx, dayIdx) {
+  const d = new Date(PLAN_START)
+  d.setDate(d.getDate() + weekIdx * 7 + dayIdx)
+  return d.toISOString().split('T')[0]
+}
+
 // ─── DAY HELPER ──────────────────────────────────────────────────────────────
 function getDayWorkouts(weekIdx, dayIdx) {
   const slot = WEEKS[weekIdx].days[dayIdx]
@@ -113,8 +121,57 @@ function SegTable({ segs, zones }) {
   );
 }
 
+// ─── ADD TO POLAR BUTTON ──────────────────────────────────────────────────────
+function AddToPolarButton({ wo, date, ftp, polar }) {
+  const [status, setStatus] = useState('idle') // idle | loading | done | error
+  const [errMsg, setErrMsg] = useState('')
+
+  if (!polar.isConnected || !wo.segs?.length) return null
+
+  const handleAdd = async () => {
+    setStatus('loading')
+    setErrMsg('')
+    try {
+      await polar.pushWorkout(wo, date, ftp)
+      setStatus('done')
+    } catch (e) {
+      setStatus('error')
+      setErrMsg(e.message || 'Push failed')
+    }
+  }
+
+  const label = status === 'loading' ? 'Adding…'
+              : status === 'done'    ? '✓ Added to Polar'
+              : status === 'error'   ? '✗ Failed — retry'
+              : '+ Add to Polar Diary'
+
+  const bg    = status === 'done'  ? '#4ade8022' : status === 'error' ? '#f8717122' : '#60a5fa18'
+  const border= status === 'done'  ? '#4ade80'   : status === 'error' ? '#f87171'   : '#60a5fa55'
+  const color = status === 'done'  ? '#4ade80'   : status === 'error' ? '#f87171'   : '#60a5fa'
+
+  return (
+    <div style={{marginTop:12}}>
+      <button
+        onClick={handleAdd}
+        disabled={status === 'loading' || status === 'done'}
+        style={{width:'100%',background:bg,border:`1px solid ${border}`,color,borderRadius:8,
+          padding:'9px 14px',fontSize:12,fontWeight:700,cursor:status==='done'?'default':'pointer',
+          letterSpacing:1,opacity:status==='loading'?0.6:1}}
+      >
+        {label}
+      </button>
+      {status === 'error' && errMsg && (
+        <div style={{marginTop:5,fontSize:10,color:'#f87171'}}>{errMsg}</div>
+      )}
+      {status === 'done' && (
+        <div style={{marginTop:5,fontSize:10,color:'#475569',textAlign:'center'}}>{date}</div>
+      )}
+    </div>
+  )
+}
+
 // ─── SESSION DETAIL ───────────────────────────────────────────────────────────
-function SessionDetail({ wo, zones, ftp, tc }) {
+function SessionDetail({ wo, zones, ftp, tc, date, polar }) {
   const stats = calcStats(wo.segs, zones);
   return (
     <div>
@@ -140,13 +197,15 @@ function SessionDetail({ wo, zones, ftp, tc }) {
         </div>
       )}
       {wo.segs?.length>0 && <SegTable segs={wo.segs} zones={zones}/>}
+      <AddToPolarButton wo={wo} date={date} ftp={ftp} polar={polar}/>
     </div>
   );
 }
 
 // ─── DAY CARD ─────────────────────────────────────────────────────────────────
-function DayCard({ dayLabel, weekIdx, dayIdx, zones, ftp, activeDay, setActiveDay }) {
+function DayCard({ dayLabel, weekIdx, dayIdx, zones, ftp, activeDay, setActiveDay, polar }) {
   const wos = getDayWorkouts(weekIdx, dayIdx);
+  const sessionDate = getSessionDate(weekIdx, dayIdx);
   const isCombined = wos.length > 1;
   const primary = wos[0];
   const secondary = wos[1];
@@ -198,7 +257,7 @@ function DayCard({ dayLabel, weekIdx, dayIdx, zones, ftp, activeDay, setActiveDa
                 <div style={{fontSize:11,fontWeight:800,color:tc,letterSpacing:2,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${tc}33`}}>
                   SESSION 1 — {primary.title.toUpperCase()}
                 </div>
-                <SessionDetail wo={primary} zones={zones} ftp={ftp} tc={tc}/>
+                <SessionDetail wo={primary} zones={zones} ftp={ftp} tc={tc} date={sessionDate} polar={polar}/>
               </div>
               <div style={{paddingTop:4,borderTop:"1px solid #1e293b"}}>
                 <div style={{fontSize:11,fontWeight:800,color:"#c084fc",letterSpacing:2,marginBottom:8,paddingTop:12}}>
@@ -213,7 +272,7 @@ function DayCard({ dayLabel, weekIdx, dayIdx, zones, ftp, activeDay, setActiveDa
               </div>
             </>
           ) : (
-            <SessionDetail wo={primary} zones={zones} ftp={ftp} tc={tc}/>
+            <SessionDetail wo={primary} zones={zones} ftp={ftp} tc={tc} date={sessionDate} polar={polar}/>
           )}
         </div>
       )}
@@ -306,6 +365,7 @@ function FTPPanel({ ftp, setFtp, maxHR, setMaxHR, zones }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function PowerZones() {
+  const polar = usePolar();
   const [ftp,       setFtp]      = useState(165);
   const [maxHR,     setMaxHR]    = useState(183);
   const [weekIdx,   setWeekIdx]  = useState(0);
@@ -336,9 +396,26 @@ export default function PowerZones() {
     <div style={{background:"#0a0a0f",minHeight:"100vh",color:"#f1f5f9",fontFamily:"'Trebuchet MS',sans-serif",maxWidth:480,margin:"0 auto"}}>
 
       <div style={{background:"linear-gradient(135deg,#1a1a2e,#0f3460)",padding:"15px 20px 13px",borderBottom:"2px solid #1e3a5f"}}>
-        <div style={{fontSize:10,letterSpacing:3,color:"#60a5fa",marginBottom:2}}>POWER ZONE WORKOUTS</div>
-        <div style={{fontSize:19,fontWeight:900}}>London → Brighton</div>
-        <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>80/20 Polarised · Dynamic FTP · 15 weeks</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={{fontSize:10,letterSpacing:3,color:"#60a5fa",marginBottom:2}}>POWER ZONE WORKOUTS</div>
+            <div style={{fontSize:19,fontWeight:900}}>London → Brighton</div>
+            <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>80/20 Polarised · Dynamic FTP · 15 weeks</div>
+          </div>
+          <button
+            onClick={polar.isConnected ? polar.logout : polar.login}
+            style={{background:polar.isConnected?"#4ade8018":"#60a5fa18",border:`1px solid ${polar.isConnected?"#4ade8055":"#60a5fa55"}`,
+              color:polar.isConnected?"#4ade80":"#60a5fa",borderRadius:8,padding:"6px 12px",
+              fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:1,whiteSpace:"nowrap",marginTop:2}}
+          >
+            {polar.isConnected ? `✓ POLAR\nCONNECTED` : 'CONNECT\nPOLAR'}
+          </button>
+        </div>
+        {polar.error && (
+          <div style={{marginTop:8,fontSize:10,color:"#f87171",background:"#f8717111",border:"1px solid #f8717133",borderRadius:6,padding:"5px 8px"}}>
+            {polar.error}
+          </div>
+        )}
       </div>
 
       <FTPPanel ftp={ftp} setFtp={setFtp} maxHR={maxHR} setMaxHR={setMaxHR} zones={zones}/>
@@ -421,7 +498,7 @@ export default function PowerZones() {
       <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:6}}>
         {DAYS.map((day,di)=>(
           <DayCard key={day} dayLabel={day} weekIdx={weekIdx} dayIdx={di}
-            zones={zones} ftp={ftp} activeDay={activeDay} setActiveDay={setActiveDay}/>
+            zones={zones} ftp={ftp} activeDay={activeDay} setActiveDay={setActiveDay} polar={polar}/>
         ))}
       </div>
 
