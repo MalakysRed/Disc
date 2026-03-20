@@ -1,17 +1,15 @@
-const STORAGE_KEY = 'l2b-user-settings'
-
-export function storageGet() {
+export function storageGet(key) {
   try {
-    const v = localStorage.getItem(STORAGE_KEY)
+    const v = localStorage.getItem(key)
     return v ? JSON.parse(v) : null
   } catch {
     return null
   }
 }
 
-export function storageSet(data) {
+export function storageSet(key, data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    localStorage.setItem(key, JSON.stringify(data))
   } catch {
     // storage unavailable
   }

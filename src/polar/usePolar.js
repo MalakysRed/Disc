@@ -10,8 +10,8 @@ import { useState, useEffect, useCallback } from 'react'
 
 const POLAR_CLIENT_ID    = import.meta.env.VITE_POLAR_CLIENT_ID
 const POLAR_REDIRECT_URI = import.meta.env.VITE_POLAR_REDIRECT_URI
-const STORAGE_KEY_TOKEN  = 'l2b-polar-token'
-const STORAGE_KEY_USER   = 'l2b-polar-user'
+const STORAGE_KEY_TOKEN  = 'disc-cycle-polar-token'
+const STORAGE_KEY_USER   = 'disc-cycle-polar-user'
 
 export function usePolar() {
   const [accessToken, setAccessToken] = useState(null)
@@ -79,7 +79,7 @@ export function usePolar() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/.netlify/functions/polar-push', {
+      const res = await fetch('/api/polar-push', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -103,7 +103,7 @@ export function usePolar() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/.netlify/functions/polar-pull', {
+      const res = await fetch('/api/polar-pull', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}` },
       })
